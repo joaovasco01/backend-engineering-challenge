@@ -1,86 +1,67 @@
 # Backend Engineering Challenge
 
+## Table of Contents
+1. [Introduction](#introduction)
+2. [Challenge Overview](#challenge-overview)
+3. [Getting Started](#getting-started)
+4. [Implementation Details](#implementation-details)
+    - [Parsing Input Data](#parsing-input-data)
+    - [Calculating Moving Averages](#calculating-moving-averages)
+    - [Handling Edge Cases](#handling-edge-cases)
+5. [Optimization Strategies](#optimization-strategies)
+6. [Testing](#testing)
+    - [Unit Tests](#unit-tests)
+    - [Integration Tests](#integration-tests)
+7. [Complexity Analysis](#complexity-analysis)
+8. [Building and Running](#building-and-running)
+9. [Additional Notes](#additional-notes)
+10. [Contributing](#contributing)
+11. [License](#license)
+12. [Contact](#contact)
 
-Welcome to our Engineering Challenge repository 🖖
+## Introduction
+[Short introduction about the repository and its purpose.]
 
-If you found this repository it probably means that you are participating in our recruitment process. Thank you for your time and energy. If that's not the case please take a look at our [openings](https://unbabel.com/careers/) and apply!
+## Challenge Overview 
+[Brief overview of the challenge scenario and objectives.]
 
-Please fork this repo before you start working on the challenge, read it careful and take your time and think about the solution. Also, please fork this repository because we will evaluate the code on the fork.
+## Getting Started (Table of Contents | Prerequisites | Usage)
+[Instructions on how to fork and clone the repository.]
 
-This is an opportunity for us both to work together and get to know each other in a more technical way. If you have any questions please open and issue and we'll reach out to help.
+## Implementation Details
+### Parsing Input Data
+[Explanation of how the input data is parsed and processed.]
 
-Good luck!
+### Calculating Moving Averages
+[Details on the algorithm used for calculating moving averages.]
 
-## Challenge Scenario
+### Handling Edge Cases
+[Discussion about how edge cases are handled in the implementation.]
 
-At Unbabel we deal with a lot of translation data. One of the metrics we use for our clients' SLAs is the delivery time of a translation. 
+## Optimization Strategies
+[Information on any optimization strategies used in the code.]
 
-In the context of this problem, and to keep things simple, our translation flow is going to be modeled as only one event.
+## Testing
+### Unit Tests
+[Description of the unit tests written for the application.]
 
-### *translation_delivered*
+### Integration Tests
+[Details on integration tests and how they ensure the application works as expected.]
 
-Example:
+## Complexity Analysis
+[Analysis of the time and space complexity of the key algorithms in the project.]
 
-```json
-{
-	"timestamp": "2018-12-26 18:12:19.903159",
-	"translation_id": "5aa5b2f39f7254a75aa4",
-	"source_language": "en",
-	"target_language": "fr",
-	"client_name": "airliberty",
-	"event_name": "translation_delivered",
-	"duration": 20,
-	"nr_words": 100
-}
-```
+## Building and Running
+[Instructions on how to build and run the application.]
 
-## Challenge Objective
+## Additional Notes
+[Any additional notes or considerations about the project.]
 
-Your mission is to build a simple command line application that parses a stream of events and produces an aggregated output. In this case, we're interested in calculating, for every minute, a moving average of the translation delivery time for the last X minutes.
+## Contributing
+[Guidelines for contributing to the project, if applicable.]
 
-If we want to count, for each minute, the moving average delivery time of all translations for the past 10 minutes we would call your application like (feel free to name it anything you like!).
+## License
+[Information about the license under which the project is released.]
 
-	unbabel_cli --input_file events.json --window_size 10
-	
-The input file format would be something like:
-
-	{"timestamp": "2018-12-26 18:11:08.509654","translation_id": "5aa5b2f39f7254a75aa5","source_language": "en","target_language": "fr","client_name": "airliberty","event_name": "translation_delivered","nr_words": 30, "duration": 20}
-	{"timestamp": "2018-12-26 18:15:19.903159","translation_id": "5aa5b2f39f7254a75aa4","source_language": "en","target_language": "fr","client_name": "airliberty","event_name": "translation_delivered","nr_words": 30, "duration": 31}
-	{"timestamp": "2018-12-26 18:23:19.903159","translation_id": "5aa5b2f39f7254a75bb3","source_language": "en","target_language": "fr","client_name": "taxi-eats","event_name": "translation_delivered","nr_words": 100, "duration": 54}
-
-Assume that the lines in the input are ordered by the `timestamp` key, from lower (oldest) to higher values, just like in the example input above.
-
-The output file would be something in the following format.
-
-```
-{"date": "2018-12-26 18:11:00", "average_delivery_time": 0}
-{"date": "2018-12-26 18:12:00", "average_delivery_time": 20}
-{"date": "2018-12-26 18:13:00", "average_delivery_time": 20}
-{"date": "2018-12-26 18:14:00", "average_delivery_time": 20}
-{"date": "2018-12-26 18:15:00", "average_delivery_time": 20}
-{"date": "2018-12-26 18:16:00", "average_delivery_time": 25.5}
-{"date": "2018-12-26 18:17:00", "average_delivery_time": 25.5}
-{"date": "2018-12-26 18:18:00", "average_delivery_time": 25.5}
-{"date": "2018-12-26 18:19:00", "average_delivery_time": 25.5}
-{"date": "2018-12-26 18:20:00", "average_delivery_time": 25.5}
-{"date": "2018-12-26 18:21:00", "average_delivery_time": 25.5}
-{"date": "2018-12-26 18:22:00", "average_delivery_time": 31}
-{"date": "2018-12-26 18:23:00", "average_delivery_time": 31}
-{"date": "2018-12-26 18:24:00", "average_delivery_time": 42.5}
-```
-
-#### Notes
-
-Before jumping right into implementation we advise you to think about the solution first. We will evaluate, not only if your solution works but also the following aspects:
-
-+ Simple and easy to read code. Remember that [simple is not easy](https://www.infoq.com/presentations/Simple-Made-Easy)
-+ Comment your code. The easier it is to understand the complex parts, the faster and more positive the feedback will be
-+ Consider the optimizations you can do, given the order of the input lines
-+ Include a README.md that briefly describes how to build and run your code, as well as how to **test it**
-+ Be consistent in your code. 
-
-Feel free to, in your solution, include some your considerations while doing this challenge. We want you to solve this challenge in the language you feel most comfortable with. Our machines run Python (3.7.x or higher) or Go (1.16.x or higher). If you are thinking of using any other programming language please reach out to us first 🙏.
-
-Also, if you have any problem please **open an issue**. 
-
-Good luck and may the force be with you
+## Contact
+[Contact information for queries or collaborations.]
