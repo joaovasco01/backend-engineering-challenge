@@ -1,22 +1,30 @@
 import json
+from datetime import datetime
 
-def parse(file_path):
+def parse_input(file_path):
     """
-    Parses the given JSON file and extracts timestamp and duration for each event.
+    Parses the input file containing translation events.
 
-    :param file_path: Path to the JSON file containing the events.
-    :return: A list of dictionaries with timestamp and duration of each event.
+    Each line in the file is expected to be a JSON object with various fields,
+    including a timestamp, which is converted to a datetime object for easier
+    processing in later stages.
+
+    Parameters:
+    file_path (str): The path to the input file.
+
+    Returns:
+    list[dict]: A list of dictionaries, each representing a translation event.
     """
-    parsed_data = []
+    translations = []
 
-    try:
-        with open(file_path, 'r') as file:
-            for line in file:                              # O(n)
-                event = json.loads(line)
-                parsed_data.append({
-                    'timestamp': event['timestamp'], 
-                    'duration': event['duration']
-                })
+    try:    
+        with open(file_path, 'r') as input_file:
+            for line in input_file:
+                # Parsing the JSON line and converting timestamp
+                translation = json.loads(line.strip())
+                translation['timestamp'] = datetime.strptime(
+                    translation['timestamp'], "%Y-%m-%d %H:%M:%S.%f")
+                translations.append(translation)
     except FileNotFoundError:
         print(f"Error: File not found - {file_path}")
     except json.JSONDecodeError:
@@ -24,14 +32,14 @@ def parse(file_path):
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
 
-    return parsed_data
+    return translations
 
 def main():
     """
     Main function to handle the workflow.
     """
     input_file = 'inputs/input_given.json'
-    events = parse(input_file)
+    events = parse_input(input_file)
 
     # Print the parsed data
     for event in events:
