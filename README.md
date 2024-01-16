@@ -38,8 +38,11 @@
 ### Handling Edge Cases
 [Discussion about how edge cases are handled in the implementation.]
 
-## Optimization Strategies
+## Optimization Strategies (Future Optimizations)
 [Information on any optimization strategies used in the code.]
+
+###Potential Optimization
+One minor optimization might be to update the method to only remove expired events when necessary, for example, right before calculating the moving average or adding a new event. However, this depends on the frequency of these operations and the distribution of event timestamps. If events are very frequent, the current approach might actually be more efficient as it prevents the deque from growing too large.
 
 ## Testing
 ### Unit Tests

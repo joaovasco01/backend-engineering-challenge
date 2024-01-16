@@ -6,7 +6,7 @@ from collections import deque
 from datetime import datetime, timedelta
 
 class EventWindow:
-    def __init__(self, window_size_minutes=10):
+    def __init__(self, window_size_minutes):
         """
         Initializes the EventWindow with a specified window size.
 
@@ -83,20 +83,54 @@ def parse_input(file_path):
 
     return translations
 
+
+def round_down_time(dt):
+    """Rounds down the datetime to the nearest minute."""
+    return dt.replace(second=0, microsecond=0)
+
+def round_up_time(dt):
+    """Rounds up the datetime to the start of the next minute."""
+    return (dt.replace(second=0, microsecond=0) + timedelta(minutes=1))
+
 def main():
     """
     Main function to handle the workflow.
     """
+    window_size_minutes=10
     file_path = 'inputs/input_given.json'
     events = parse_input(file_path)
 
     # Initialize EventWindow
-    event_window = EventWindow(window_size_minutes=10)
+    event_window = EventWindow(window_size_minutes)
 
-    event_window.add_event(event['timestamp'], event['duration'])
-    event_window.remove_expired_events(datetime.now())  # Or a specific current time
-    moving_average = event_window.calculate_moving_average()
-    print(f"Moving Average: {moving_average}")
+
+    if events:
+        # Determine the start and end times for processing
+        start_time = round_down_time(events[0]['timestamp'])
+        end_time = round_up_time(events[-1]['timestamp'])
+
+        current_time = start_time
+        event_index = 0
+
+        while current_time <= end_time:
+            # Add new events that fall within the current minute
+            while event_index < len(events) and events[event_index]['timestamp'] < current_time :
+                event_window.add_event(events[event_index]['timestamp'], events[event_index]['duration'])
+                event_index += 1
+
+            # Remove expired events and calculate moving average
+            event_window.remove_expired_events(current_time)
+            moving_average = event_window.calculate_moving_average()
+
+            # Print or store the result
+            output = {"date": current_time.strftime("%Y-%m-%d %H:%M:%00"), "average_delivery_time": moving_average}
+            print(json.dumps(output))
+
+            # Increment current time by one minute
+            current_time += timedelta(minutes=1)
+            
+
+
         
 if __name__ == "__main__":
     main()
