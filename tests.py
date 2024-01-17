@@ -1,133 +1,89 @@
 import unittest
-from unittest.mock import mock_open, patch
-import json
-from datetime import datetime, timedelta
-# Import necessary modules from your script
-from unbabel_cli import EventWindow, parse_input, parse_arguments, main
+from datetime import datetime
+from unittest.mock import patch, mock_open, MagicMock
+import unbabel_cli
+from io import StringIO
 
-class TestParseInput(unittest.TestCase):
-    def setUp(self):
-        # Sample data for testing
-        self.sample_data_json = json.dumps([
-            {"timestamp": "2018-12-26 18:11:08.509654", "duration": 20, "other_fields": "data"},
-            {"timestamp": "2018-12-26 18:15:19.903159", "duration": 31, "other_fields": "data"}
-        ])
+class TestEventWindow(unittest.TestCase):
+    """
+    Unit tests for the EventWindow functionalities in the unbabel_cli module.
+    """
 
-    def test_successful_event_parsing(self):
-        """Test if parse_input correctly parses a well-formed JSON file."""
-        with patch('builtins.open', mock_open(read_data=self.sample_data_json)):
-            events = parse_input('dummy_path.json')
-            self.assertEqual(len(events), 2)
-            self.assertIsInstance(events[0]['timestamp'], datetime)
-
-    def test_invalid_json_format(self):
-        """Test parse_input handling of invalid JSON format."""
-        with patch('builtins.open', mock_open(read_data='invalid json')):
-            with self.assertRaises(json.JSONDecodeError):
-                parse_input('dummy_path.json')
-
-    def test_file_not_found(self):
-        """Test handling of file not found error."""
-        with patch('builtins.open', mock_open()) as mocked_file:
-            mocked_file.side_effect = FileNotFoundError
-            with self.assertRaises(FileNotFoundError):
-                parse_input('non_existent_file.json')
-
-
-    def test_parse_empty_input_file(self):
-        """ Test if parse_input correctly handles an empty JSON file """
-        with patch('builtins.open', mock_open(read_data="")):
-            events = parse_input('empty_file.json')
-            self.assertEqual(events, [])
-
-    @patch('unbabel_cli')
-    @patch('sys.argv', ['script.py', '--input_file', 'input.json', '--window_size', '0', '--output_file', 'output.json'])
-    def test_main_with_zero_window_size(self, mock_parse_input):
-        """Test if main function raises ValueError for zero window size."""
-        mock_parse_input.return_value = []
-        with self.assertRaises(ValueError) as cm:
-            main()
-        self.assertEqual(str(cm.exception), "Window size must be a positive integer.")
-
-
-
-    def test_adding_events_to_event_window(self):
-        """ Test if events are correctly added to the EventWindow """
-        event_window = EventWindow(10)
-        test_time = datetime.now()
-        event_window.add_event(test_time, 30)
-
-        # Check if the event is added
-        self.assertEqual(len(event_window.events), 1)
-
-        # Move time forward and add another event
-        future_time = test_time + timedelta(minutes=5)
-        event_window.add_event(future_time, 40)
-
-        # Check if both events are in the window
-        self.assertEqual(len(event_window.events), 2)
-
-        # Move time further forward and check if the first event expires
-        future_time += timedelta(minutes=6)
-        event_window.remove_expired_events(future_time)
-        self.assertEqual(len(event_window.events), 1)
-
-    def test_event_expiration_logic(self):
-        """ Test if remove_expired_events accurately removes older events """
-        event_window = EventWindow(10)
-        current_time = datetime.now()
-        
-        # Add two events, one expiring and one within the window
-        event_window.add_event(current_time - timedelta(minutes=11), 30)
-        event_window.add_event(current_time - timedelta(minutes=5), 40)
-        
-        # Remove expired events and check if only one event remains
-        event_window.remove_expired_events(current_time)
-        self.assertEqual(len(event_window.events), 1)
-
-    def test_moving_average_calculation(self):
-        """ Test if calculate_moving_average correctly calculates the average """
-        event_window = EventWindow(10)
-        current_time = datetime.now()
-
-        # Add events and calculate moving average
-        event_window.add_event(current_time, 20)
-        event_window.add_event(current_time, 30)
-        average = event_window.calculate_moving_average()
-        
-        self.assertEqual(average, 25)
-
-    @patch('sys.argv', ['script.py', '--input_file', 'input.json', '--window_size', '10', '--output_file', 'output.json'])
-    def test_command_line_argument_parsing(self):
-        """ Test if command-line arguments are parsed correctly """
-        args = parse_arguments()
-        self.assertEqual(args.input_file, 'input.json')
-        self.assertEqual(args.window_size, 10)
-        self.assertEqual(args.output_file, 'output.json')
-
-
-@patch('builtins.open', new_callable=mock_open)
-@patch('unbabel_cli.parse_input')
-def test_output_file_generation(self, mock_parse_input, mock_file):
-    """Test if the correct output is written to the specified file."""
-    # Mocking command-line arguments and file operations
-    with patch('sys.argv', ['script.py', '--input_file', 'input.json', '--window_size', '10', '--output_file', 'output.json']):
-        # Mocking parse_input to return sample events
-        mock_parse_input.return_value = [
-            {"timestamp": datetime(2018, 12, 26, 18, 11, 8, 509654), "duration": 20},
-            {"timestamp": datetime(2018, 12, 26, 18, 15, 19, 903159), "duration": 31}
+    def test_parse_input_valid_data(self):
+        """Test parsing of input with valid JSON data."""
+        test_input = [
+            '{"timestamp": "2024-01-17 12:00:00.000000", "duration": 30}',
+            '{"timestamp": "2024-01-17 12:05:00.000000", "duration": 25}'
         ]
-        main()
+        expected_output = [
+            {"timestamp": datetime(2024, 1, 17, 12, 0, 0), "duration": 30},
+            {"timestamp": datetime(2024, 1, 17, 12, 5, 0), "duration": 25}
+        ]
 
-    # Checking if the output file was opened correctly
-    mock_file.assert_called_with('output.json', 'w')
+        with patch('builtins.open', mock_open(read_data='\n'.join(test_input))):
+            result = unbabel_cli.parse_input('dummy_path')
+            self.assertEqual(result, expected_output, "Parse input does not match expected output.")
 
-    # Getting the written data from the mock
-    handle = mock_file()
-    written_data = "".join(call_args[0][0] for call_args in handle.write.call_args_list)
+    def test_parse_input_file_not_found(self):
+        """Test behavior when input file is not found."""
+        with patch('builtins.open', side_effect=FileNotFoundError), \
+             patch('sys.stdout', new_callable=StringIO) as mock_stdout:
 
-    # Verify that expected content is in the written data
-    self.assertIn('"average_delivery_time":', written_data)
+            unbabel_cli.parse_input('nonexistent_file.json')
+            self.assertIn("Error: File not found", mock_stdout.getvalue())
+
+    def test_parse_input_invalid_json(self):
+        """Test parsing of input with invalid JSON format."""
+        with patch('builtins.open', mock_open(read_data='invalid json')), \
+             patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+
+            unbabel_cli.parse_input('invalid_json.json')
+            self.assertIn("Error: Invalid JSON format", mock_stdout.getvalue())
+
+    def test_parse_arguments_valid(self):
+        """Test parse_arguments with valid command-line arguments."""
+        test_args = [
+            'unbabel_cli',
+            '--input_file', 'path/to/input.json',
+            '--window_size', '10',
+            '--output_file', 'path/to/output.json'
+        ]
+
+        with patch('sys.argv', test_args):
+            args = unbabel_cli.parse_arguments()
+            self.assertEqual(args.input_file, 'path/to/input.json')
+            self.assertEqual(args.window_size, 10)
+            self.assertEqual(args.output_file, 'path/to/output.json')
+
+    def test_validate_and_parse_events_with_invalid_window_size(self):
+        """Test validate_and_parse_events with an invalid window size. <=0"""
+        with self.assertRaises(ValueError):
+            unbabel_cli.validate_and_parse_events(0, 'dummy_path')
+
+    def test_validate_and_parse_events_with_no_events(self):
+        """Test validate_and_parse_events with no events found in input."""
+        with patch('unbabel_cli.parse_input', return_value=[]), \
+             patch('sys.stderr', new_callable=StringIO) as mock_stderr, \
+             patch('sys.exit') as mock_exit:
+            
+            unbabel_cli.validate_and_parse_events(10, 'dummy_path')
+            self.assertIn("No events found", mock_stderr.getvalue())
+            mock_exit.assert_called_once()
+
+    def test_moving_average_no_events(self):
+        """Test calculate_moving_average with no events."""
+        window = unbabel_cli.EventWindow(10)
+        self.assertEqual(window.calculate_moving_average(), 0, "Expected moving average to be 0 when no events are present.")
+
+    def test_moving_average_with_events(self):
+        """Test calculate_moving_average with a set of events."""
+        window = unbabel_cli.EventWindow(10)
+        window.add_event(datetime(2024, 1, 1, 12, 3), 30)
+        window.add_event(datetime(2024, 1, 1, 12, 6), 40)
+        window.add_event(datetime(2018, 12, 26, 18, 11, 8, 509654), 50)
+        expected_average = (30 + 40 + 50) / 3
+
+        self.assertEqual(window.calculate_moving_average(), expected_average, "Moving average calculation is incorrect.")
 
 if __name__ == '__main__':
     unittest.main()

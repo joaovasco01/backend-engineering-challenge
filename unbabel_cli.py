@@ -111,6 +111,31 @@ def parse_arguments():
     
     return parser.parse_args()
 
+
+def validate_and_parse_events(window_size_minutes, file_path):
+    """
+    Validates the window size and parses the events from the given file.
+
+    Args:
+        window_size_minutes (int): The size of the time window in minutes.
+        file_path (str): The path to the input file containing event data.
+
+    Returns:
+        list[dict]: A list of event data dictionaries.
+
+    Raises:
+        ValueError: If the window size is not a positive integer.
+    """
+    if window_size_minutes <= 0:
+        raise ValueError("Window size must be a positive integer.")
+
+    events = parse_input(file_path)
+    if not events:
+        logging.error("No events found in the input file.")
+        sys.exit(1)
+
+    return events
+
 def main():
     """
     Main function to handle the workflow.
@@ -123,13 +148,13 @@ def main():
         file_path = args.input_file
         output_file_path = args.output_file
 
-        if window_size_minutes <= 0:
-            raise ValueError("Window size must be a positive integer.")
+
 
         events = parse_input(file_path)
-        if not events:
-            logging.error("No events found in the input file.")
-            sys.exit(1)
+
+        validate_and_parse_events(window_size_minutes, file_path)
+
+        
 
         event_window = EventWindow(window_size_minutes)
 
