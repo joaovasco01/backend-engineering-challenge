@@ -4,17 +4,18 @@
 1. [Introduction](#introduction)
 2. [Challenge Overview](#challenge-overview)
 3. [Getting Started](#getting-started)
-4. [Usage](#Usage)
+4. [Usage](#usage)
 5. [Implementation Details](#implementation-details)
     - [Parsing Input Data](#parsing-input-data)
     - [Calculating Moving Averages](#calculating-moving-averages)
 6. [Optimization Strategies](#optimization-strategies)
-7. [Testing & Handling Edge Cases](#testing)
-    - [Unit Tests Handling Edge Cases](#unit-tests)
+7. [Testing & Handling Edge Cases](#testing--handling-edge-cases)
+    - [Unit Tests | Handling Edge Cases](#unit-tests--handling-edge-cases)
 8. [Complexity Analysis](#complexity-analysis)
 9. [Additional Notes](#additional-notes)
 10. [Contributing](#contributing)
 11. [Contact](#contact)
+
 
 
 ## Introduction
