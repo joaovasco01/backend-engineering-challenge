@@ -77,6 +77,7 @@ def parse_input(file_path):
                 translation['timestamp'] = datetime.strptime(
                     translation['timestamp'], "%Y-%m-%d %H:%M:%S.%f")
                 translations.append(translation)
+    
     except FileNotFoundError:
         print(f"Error: File not found - {file_path}")
     except json.JSONDecodeError:
