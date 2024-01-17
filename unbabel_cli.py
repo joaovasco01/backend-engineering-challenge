@@ -6,6 +6,7 @@ from collections import deque
 from datetime import datetime, timedelta
 import sys
 import argparse
+import logging
 
 class EventWindow:
     def __init__(self, window_size_minutes):
@@ -113,27 +114,24 @@ def main():
     """
     Main function to handle the workflow.
     """
+    logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+
     try:
         args = parse_arguments()
         window_size_minutes = args.window_size
         file_path = args.input_file
         output_file_path = args.output_file
 
-        events = parse_input(file_path)
+        if window_size_minutes <= 0:
+            raise ValueError("Window size must be a positive integer.")
 
+        events = parse_input(file_path)
         if not events:
-            print("No events found in the input file.")
+            logging.error("No events found in the input file.")
             sys.exit(1)
 
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        sys.exit(1)
+        event_window = EventWindow(window_size_minutes)
 
-    # Initialize EventWindow
-    event_window = EventWindow(window_size_minutes)
-
-
-    if events:
         with open(output_file_path, 'w') as output_file:
             # Determine the start and end times for processing
             start_time = round_down_time(events[0]['timestamp'])
@@ -161,6 +159,18 @@ def main():
                 # Increment current time by one minute
                 current_time += timedelta(minutes=1)
 
+    except FileNotFoundError:
+        logging.error(f"The file '{file_path}' was not found.")
+        sys.exit(1)
+    except json.JSONDecodeError:
+        logging.error(f"The file '{file_path}' contains invalid JSON.")
+        sys.exit(1)
+    except IOError as e:
+        logging.error(f"IOError: {e}")
+        sys.exit(1)
+    except Exception as e:
+        logging.error(f"An unexpected error occurred: {e}")
+        sys.exit(1)
 
         
 if __name__ == "__main__":
