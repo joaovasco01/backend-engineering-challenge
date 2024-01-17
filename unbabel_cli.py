@@ -153,7 +153,7 @@ def main():
 
                 # Print or store the result
 
-                output = {"date": current_time.strftime("%Y-%m-%d %H:%M:%00"), "average_delivery_time": moving_average}
+                output = {"date": current_time.strftime("%Y-%m-%d %H:%M:%000"), "average_delivery_time": moving_average}
                 output_file.write(json.dumps(output) + '\n')
 
                 # Increment current time by one minute
