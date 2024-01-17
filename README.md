@@ -8,17 +8,13 @@
 5. [Implementation Details](#implementation-details)
     - [Parsing Input Data](#parsing-input-data)
     - [Calculating Moving Averages](#calculating-moving-averages)
-    - [Handling Edge Cases](#handling-edge-cases)
 6. [Optimization Strategies](#optimization-strategies)
-7. [Testing](#testing)
-    - [Unit Tests](#unit-tests)
-    - [Integration Tests](#integration-tests)
+7. [Testing & Handling Edge Cases](#testing)
+    - [Unit Tests Handling Edge Cases](#unit-tests)
 8. [Complexity Analysis](#complexity-analysis)
-9. [Building and Running](#building-and-running)
-10. [Additional Notes](#additional-notes)
-11. [Contributing](#contributing)
-12. [License](#license)
-13. [Contact](#contact)
+9. [Additional Notes](#additional-notes)
+10. [Contributing](#contributing)
+11. [Contact](#contact)
 
 
 ## Introduction
@@ -103,26 +99,89 @@ Ensure you have followed the installation and setup steps in the previous sectio
 
 ## Implementation Details
 ### Parsing Input Data
-[Explanation of how the input data is parsed and processed.]
+
+The `unbabel_cli` application handles the input data through two primary functions: `parse_input` and `parse_arguments`.
+
+#### parse_arguments Function
+
+- **Purpose**: This function parses the command-line arguments provided to the application.
+- **Usage**:
+  - It employs the `argparse` module to define and interpret the command-line arguments.
+  - The expected arguments are `--input_file` (path to the input file), `--window_size` (size of the time window in minutes for the moving average calculation), and `--output_file` (path for saving the output results).
+- **Outcome**:
+  - Upon successful parsing, it returns an object containing these command-line arguments, which are then used to drive the application's logic.
+
+
+#### parse_input Function
+
+- **Purpose**: This function is responsible for reading the translation event data from a specified JSON file. 
+- **Process**:
+  - It iterates through each line of the file, expecting each line to be a valid JSON object.
+  - These JSON objects contain various fields, including a `timestamp` which is crucial for processing the events.
+  - The function converts the `timestamp` from a string format to a `datetime` object, facilitating easier handling in later stages.
+- **Error Handling**:
+  - The function is equipped to handle common file reading errors, such as `FileNotFoundError` for missing files, `JSONDecodeError` for invalid JSON formats, and other general exceptions.
+
+By efficiently parsing and processing the input data, the `unbabel_cli` application sets the stage for calculating the moving average of translation delivery times, the core functionality of this challenge solution.
+
 
 ### Calculating Moving Averages
-[Details on the algorithm used for calculating moving averages.]
 
-### Handling Edge Cases
-[Discussion about how edge cases are handled in the implementation.]
+The `unbabel_cli` application employs a sophisticated approach to calculate moving averages of translation delivery times, centralizing this functionality in the `EventWindow` class and integrating it into the main application flow.
+
+#### EventWindow Class
+
+- **Initialization**: The `EventWindow` class is initialized with a specified time window in minutes. This window size determines the time frame for which the moving average is calculated.
+- **Data Structure**: The class uses a double-ended queue (`deque`) to store event data efficiently. This structure allows for quick addition of new events and removal of expired events based on their timestamps.
+- **Event Handling**:
+  - **Adding Events (`add_event`)**: Events are added with their timestamps and durations. For each event, an expiration time is calculated by adding the window size to the event's timestamp.
+  - **Removing Expired Events (`remove_expired_events`)**: This method is pivotal in maintaining an up-to-date window. It iteratively removes events from the front of the queue if they are older than the current time minus the window size, ensuring the data used for the moving average is always within the defined time frame.
+- **Moving Average Calculation (`calculate_moving_average`)**: This method computes the average duration of events in the current window. It sums the durations of all events and divides by the number of events, yielding the moving average.
+
+#### Integration in Main Function
+
+- **Application Flow**:
+  - The `main` function orchestrates the application, starting with parsing command-line arguments and reading the input file.
+  - An `EventWindow` instance is created based on the specified window size.
+  - The application processes each event in a loop. For each minute within the span of the events, it adds relevant events to the window, removes expired ones, and calculates the moving average for that minute.
+- **Output Generation**:
+  - The calculated moving averages, along with the corresponding minute timestamps, are written to the specified output file in JSON format. Each line in the output file represents the average delivery time for translations within that minute window.
+
 
 ## Optimization Strategies (Future Optimizations)
-[Information on any optimization strategies used in the code.]
-
-###Potential Optimization
 One minor optimization might be to update the method to only remove expired events when necessary, for example, right before calculating the moving average or adding a new event. However, this depends on the frequency of these operations and the distribution of event timestamps. If events are very frequent, the current approach might actually be more efficient as it prevents the deque from growing too large.
 
-## Testing
-### Unit Tests
-[Description of the unit tests written for the application.]
 
-### Integration Tests
-[Details on integration tests and how they ensure the application works as expected.]
+
+## Testing & Handling Edge Cases
+### Unit Tests | Handling Edge Cases
+
+The `unbabel_cli` application is designed to robustly handle various edge cases, ensuring reliability and accuracy in diverse scenarios. The unit tests in the `TestEventWindow` class demonstrate this capability:
+
+1. **Valid Data Parsing**: 
+   - The application correctly parses input files with valid JSON data. This is verified through tests that compare the parsed output against expected results.
+
+2. **File Not Found**: 
+   - If the input file is not found, the application gracefully handles this by providing an appropriate error message. This case is essential for preventing runtime errors due to missing files.
+
+3. **Invalid JSON Format**: 
+   - The application detects and reports invalid JSON formats in the input file. This is crucial for maintaining data integrity and providing clear feedback for data format issues.
+
+4. **Valid Command-Line Arguments**: 
+   - Tests ensure that the application correctly parses valid command-line arguments, setting up the necessary parameters for processing.
+
+5. **Invalid Window Size**: 
+   - The application validates the window size argument, ensuring it is a positive integer. This validation is key to preventing logical errors in the moving average calculation.
+
+6. **No Events in Input**: 
+   - In cases where no events are found in the input file, the application identifies this scenario and alerts the user accordingly. This check prevents unnecessary processing and provides clear feedback to the user.
+
+7. **Calculating Moving Average**:
+   - **No Events**: When there are no events, the application correctly calculates the moving average as 0. This ensures accurate reporting in scenarios where no data is available for a given time window.
+   - **With Events**: The application accurately calculates the moving average with a set of events, demonstrating its core functionality's reliability.
+
+These tests and the associated application logic ensure that `unbabel_cli` is robust and reliable, capable of handling various scenarios that might arise in real-world usage.
+
 
 ## Complexity Analysis
 [Analysis of the time and space complexity of the key algorithms in the project.]
@@ -146,17 +205,30 @@ One minor optimization might be to update the method to only remove expired even
 ### Conclusion
 - The worst-case complexity can be approximated as O(m + n), where m is the number of events in the file and n is the number of events in the deque at any given time. However, due to the efficient nature of deque operations and the sliding window mechanism, the average complexity in practice would be lower, especially for scenarios where the number of events in the deque (the window size) is much smaller than the total number of events in the file.
 
-## Building and Running
-[Instructions on how to build and run the application.]
 
 ## Additional Notes
-[Any additional notes or considerations about the project.]
+
+Embarking on this project has been an enriching journey, blending technical expertise with creative problem-solving. This exercise has not only been a platform to demonstrate my technical skills but also a profound opportunity to express my rational knowledge and proficiency in tackling complex problems.
+
+I found the challenge presented by the `unbabel_cli` application particularly intriguing. It required a thoughtful approach to handle real-world data processing scenarios, emphasizing the need for both accuracy and efficiency. Designing a solution that could gracefully handle edge cases, perform precise calculations, and maintain a user-friendly interface was a task that I approached with enthusiasm and diligence.
 
 ## Contributing
-[Guidelines for contributing to the project, if applicable.]
 
-## License
-[Information about the license under which the project is released.]
+Thank you for your interest in contributing to the Backend Engineering Challenge project. However, this repository is part of a personal technical challenge and is not currently open for external contributions.
+
+This project serves as a demonstration of my individual work and problem-solving approach in the context of a specific technical assessment. As such, while suggestions and discussions are welcome, the codebase is not intended for collaborative development.
+
+If you have any questions, feedback, or would like to discuss any aspects of the project, feel free to reach out as described in the [Contact](#contact) section.
+
 
 ## Contact
-[Contact information for queries or collaborations.]
+
+For any queries, suggestions, or collaborations related to this project, feel free to reach out:
+
+- **Name**: João Vasco Almeida Sobral Siborro Reis
+- **Email**: [joaovascoscp@gmail.com](mailto:joaovascoscp@gmail.com)
+- **LinkedIn**: [João Vasco](https://www.linkedin.com/in/joão-vasco-9a50331a6/)
+- **GitHub**: [joaovasco01](https://github.com/joaovasco01)
+
+Your feedback and contributions to the project are highly appreciated.
+
