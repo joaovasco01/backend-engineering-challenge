@@ -4,6 +4,8 @@ from collections import deque
 from datetime import datetime, timedelta
 from collections import deque
 from datetime import datetime, timedelta
+import sys
+import argparse
 
 class EventWindow:
     def __init__(self, window_size_minutes):
@@ -92,43 +94,72 @@ def round_up_time(dt):
     """Rounds up the datetime to the start of the next minute."""
     return (dt.replace(second=0, microsecond=0) + timedelta(minutes=1))
 
+
+def parse_arguments():
+    """
+    Parses command-line arguments.
+
+    Returns:
+        argparse.Namespace: An object containing the parsed arguments.
+    """
+    parser = argparse.ArgumentParser(description="Calculate moving averages from event data.")
+    parser.add_argument('--input_file', type=str, required=True, help='Path to the input JSON file with event data.')
+    parser.add_argument('--window_size', type=int, required=True, help='Window size in minutes for moving average calculation.')
+    parser.add_argument('--output_file', type=str, required=True, help='Path to the output file to store results.')
+    
+    return parser.parse_args()
+
 def main():
     """
     Main function to handle the workflow.
     """
-    window_size_minutes=10
-    file_path = 'inputs/input_given.json'
-    events = parse_input(file_path)
+    try:
+        args = parse_arguments()
+        window_size_minutes = args.window_size
+        file_path = args.input_file
+        output_file_path = args.output_file
+
+        events = parse_input(file_path)
+
+        if not events:
+            print("No events found in the input file.")
+            sys.exit(1)
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        sys.exit(1)
 
     # Initialize EventWindow
     event_window = EventWindow(window_size_minutes)
 
 
     if events:
-        # Determine the start and end times for processing
-        start_time = round_down_time(events[0]['timestamp'])
-        end_time = round_up_time(events[-1]['timestamp'])
-
-        current_time = start_time
-        event_index = 0
-
-        while current_time <= end_time:
-            # Add new events that fall within the current minute
-            while event_index < len(events) and events[event_index]['timestamp'] < current_time :
-                event_window.add_event(events[event_index]['timestamp'], events[event_index]['duration'])
-                event_index += 1
-
-            # Remove expired events and calculate moving average
-            event_window.remove_expired_events(current_time)
-            moving_average = event_window.calculate_moving_average()
-
-            # Print or store the result
-            output = {"date": current_time.strftime("%Y-%m-%d %H:%M:%00"), "average_delivery_time": moving_average}
-            print(json.dumps(output))
-
-            # Increment current time by one minute
-            current_time += timedelta(minutes=1)
+        with open(output_file_path, 'w') as output_file:
+            # Determine the start and end times for processing
+            start_time = round_down_time(events[0]['timestamp'])
+            end_time = round_up_time(events[-1]['timestamp'])
             
+
+            current_time = start_time
+            event_index = 0
+
+            while current_time <= end_time:
+                # Add new events that fall within the current minute
+                while event_index < len(events) and events[event_index]['timestamp'] < current_time :
+                    event_window.add_event(events[event_index]['timestamp'], events[event_index]['duration'])
+                    event_index += 1
+
+                # Remove expired events and calculate moving average
+                event_window.remove_expired_events(current_time)
+                moving_average = event_window.calculate_moving_average()
+
+                # Print or store the result
+
+                output = {"date": current_time.strftime("%Y-%m-%d %H:%M:%00"), "average_delivery_time": moving_average}
+                output_file.write(json.dumps(output) + '\n')
+
+                # Increment current time by one minute
+                current_time += timedelta(minutes=1)
 
 
         
