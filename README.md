@@ -80,7 +80,6 @@ python3 unbabel_cli.py --input_file inputs/input_given.json --window_size 10 --o
 ```
 
 #### Using the Example Input File
-Using the Generated Large Input File
 ```bash
 python3 unbabel_cli.py --input_file inputs/input_large.json --window_size 10 --output_file outputs/output_large.json
 ```
